@@ -5,7 +5,11 @@ import { supabase } from "../lib/supabase";
 type AuthContextType = {
   user: User | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (
+    email: string,
+    password: string,
+    remember?: boolean
+  ) => Promise<void>;
   signUp: (email: string, password: string, name: string) => Promise<void>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
@@ -70,10 +74,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (
+    email: string,
+    password: string,
+    remember: boolean = false
+  ) => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
+      options: {
+        // Set session duration - 24 hours for non-remember, 30 days for remember
+        expiresIn: remember ? 30 * 24 * 60 * 60 : 24 * 60 * 60, // seconds
+      },
     });
     if (error) throw error;
   };

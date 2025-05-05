@@ -1,31 +1,32 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, AlertCircle } from 'lucide-react';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { useAuth } from '../context/AuthContext';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Mail, Lock, AlertCircle } from "lucide-react";
+import { Button } from "../components/ui/Button";
+import { Input } from "../components/ui/Input";
+import { useAuth } from "../context/AuthContext";
 
 export function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { signIn } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setIsLoading(true);
 
     try {
-      await signIn(email, password);
-      navigate('/');
+      await signIn(email, password, rememberMe);
+      navigate("/");
     } catch (err: any) {
-      if (err?.message?.includes('invalid_credentials')) {
-        setError('Invalid email or password. Please try again.');
+      if (err?.message?.includes("invalid_credentials")) {
+        setError("Invalid email or password. Please try again.");
       } else {
-        setError('Failed to sign in. Please try again.');
+        setError("Failed to sign in. Please try again.");
       }
     } finally {
       setIsLoading(false);
@@ -40,8 +41,11 @@ export function LoginPage() {
             Sign in to your account
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
-            <Link to="/signup" className="font-medium text-red-600 hover:text-red-500">
+            Or{" "}
+            <Link
+              to="/signup"
+              className="font-medium text-red-600 hover:text-red-500"
+            >
               create a new account
             </Link>
           </p>
@@ -83,6 +87,34 @@ export function LoginPage() {
             />
           </div>
 
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <input
+                id="remember-me"
+                name="remember-me"
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+              />
+              <label
+                htmlFor="remember-me"
+                className="ml-2 block text-sm text-gray-900"
+              >
+                Remember me
+              </label>
+            </div>
+
+            <div className="text-sm">
+              <a
+                href="#"
+                className="font-medium text-red-600 hover:text-red-500"
+              >
+                Forgot your password?
+              </a>
+            </div>
+          </div>
+
           <div>
             <Button
               type="submit"
@@ -96,9 +128,7 @@ export function LoginPage() {
         </form>
 
         <div className="mt-4 text-center">
-          <p className="text-sm text-gray-600">
-            Demo Accounts:
-          </p>
+          <p className="text-sm text-gray-600">Demo Accounts:</p>
           <div className="mt-2 space-y-1 text-sm text-gray-500">
             <p>Customer: customer@example.com / password</p>
             <p>Staff: staff@example.com / password</p>
