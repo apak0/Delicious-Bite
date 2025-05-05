@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useReducer, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useReducer,
+  useState,
+  useEffect,
+} from "react";
 import { Order, CartItem, OrderStatus } from "../types";
 import { initialOrders } from "../data/initialData";
 import { v4 as uuidv4 } from "uuid";
@@ -43,12 +49,46 @@ type OrderContextType = {
 // Create the context
 const OrderContext = createContext<OrderContextType | undefined>(undefined);
 
+// Load cart from localStorage
+const loadCartFromStorage = (): CartItem[] => {
+  if (typeof window === "undefined") return [];
+
+  try {
+    const savedCart = localStorage.getItem("delicious-bite-cart");
+    return savedCart ? JSON.parse(savedCart) : [];
+  } catch (error) {
+    console.error("Error loading cart from localStorage:", error);
+    return [];
+  }
+};
+
+// Save cart to localStorage
+const saveCartToStorage = (cart: CartItem[]): void => {
+  if (typeof window === "undefined") return;
+
+  try {
+    localStorage.setItem("delicious-bite-cart", JSON.stringify(cart));
+  } catch (error) {
+    console.error("Error saving cart to localStorage:", error);
+  }
+};
+
 // Create provider component
 export function OrderProvider({ children }: { children: React.ReactNode }) {
   const [orders, setOrders] = useState<Order[]>(initialOrders);
-  const [cart, cartDispatch] = useReducer(cartReducer, []);
+  const [cart, dispatch] = useReducer(cartReducer, [], loadCartFromStorage);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Save cart to localStorage whenever it changes
+  useEffect(() => {
+    saveCartToStorage(cart);
+  }, [cart]);
+
+  // Create a wrapper for cartDispatch that will also save to localStorage
+  const cartDispatch: CartDispatch = (action) => {
+    dispatch(action);
+  };
 
   // Calculate cart total
   const cartTotal = cart.reduce(
