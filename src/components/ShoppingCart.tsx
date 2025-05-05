@@ -5,6 +5,8 @@ import { Input, Textarea } from "./ui/Input";
 import { useOrders } from "../context/OrderContext";
 import { formatCurrency } from "../utils/formatters";
 import { useToast } from "./ui/Toast";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 interface ShoppingCartProps {
   isOpen: boolean;
@@ -14,6 +16,8 @@ interface ShoppingCartProps {
 export function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
   const { cart, cartDispatch, cartTotal, orderDispatch } = useOrders();
   const { showToast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -79,7 +83,22 @@ export function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
 
   const handleCheckout = async () => {
     if (checkoutStep === 1) {
+      // Check if user is logged in before proceeding to checkout
+      if (!user) {
+        showToast("Please log in to place an order", "info");
+        onClose(); // Close the cart
+        navigate("/login"); // Redirect to login page
+        return;
+      }
+
+      // If user is logged in, proceed to checkout step
       setCheckoutStep(2);
+
+      // Pre-fill form with user's information if available
+      if (user) {
+        setCustomerName(user.name || "");
+      }
+
       return;
     }
 
