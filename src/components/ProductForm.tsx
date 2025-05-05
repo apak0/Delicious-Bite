@@ -33,6 +33,7 @@ const COMMON_CATEGORIES = [
   "Soups",
   "Salads",
   "Sandwiches",
+  "Hamburgers",
   "Desserts",
   "Main Courses",
   "Burgers",
