@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { useProducts } from "../context/ProductContext";
+import { useEffect, useState, useMemo } from "react";
+import { useProducts } from "../hooks/useProducts";
 import ProductForm from "../components/ProductForm";
 import ProductCard from "../components/ProductCard";
 import { Modal } from "../components/ui/Modal";
@@ -40,7 +40,7 @@ export default function ProductManagementPage() {
   // Load products on component mount
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [fetchProducts]);
 
   // Get unique categories from products for filter dropdown
   const categories = useMemo(() => {

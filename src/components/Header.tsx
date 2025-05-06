@@ -1,8 +1,6 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ShoppingBag, Menu, X, UserCircle, LogOut } from "lucide-react";
-import { Button } from "./ui/Button";
-import { Badge } from "./ui/Badge";
 import { ShoppingCart } from "./ShoppingCart";
 import { useOrders } from "../hooks/useOrders";
 import { useAuth } from "../context/AuthContext";
@@ -12,7 +10,7 @@ export function Header() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { cart } = useOrders();
-  const { user, signOut, isAdmin, isStaff } = useAuth();
+  const { user, signOut, isStaff } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -148,14 +146,24 @@ export function Header() {
                 >
                   <div className="py-1">
                     {user ? (
-                      <div className="px-4 py-2">
-                        <p className="text-sm font-medium text-gray-900">
-                          {user.name}
-                        </p>
-                        <p className="text-xs text-gray-500 capitalize">
-                          {user.role}
-                        </p>
-                      </div>
+                      <>
+                        <div className="px-4 py-2">
+                          <p className="text-sm font-medium text-gray-900">
+                            {user.name}
+                          </p>
+                          <p className="text-xs text-gray-500 capitalize">
+                            {user.role}
+                          </p>
+                        </div>
+                        <Link
+                          to="/orders"
+                          className="flex px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 items-center"
+                          onClick={() => setIsUserMenuOpen(false)}
+                        >
+                          <ShoppingBag size={16} className="mr-2" />
+                          My Orders
+                        </Link>
+                      </>
                     ) : (
                       <>
                         <Link

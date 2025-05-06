@@ -1,30 +1,24 @@
-import React, { createContext, useContext, useState } from 'react';
-import { supabase } from '../lib/supabase';
-
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image_url: string; // Updated from imageUrl to image_url
-  category: string;
-  available: boolean;
-}
+import { createContext, useState } from "react";
+import { supabase } from "../lib/supabase";
+import type { DbProduct } from "../types";
 
 interface ProductContextType {
-  products: Product[];
+  products: DbProduct[];
   loading: boolean;
   error: string | null;
   fetchProducts: () => Promise<void>;
-  addProduct: (product: Omit<Product, 'id'>) => Promise<void>;
-  updateProduct: (id: string, product: Partial<Product>) => Promise<void>;
+  fetchPopularProducts: () => Promise<DbProduct[]>;
+  addProduct: (product: Omit<DbProduct, "id">) => Promise<void>;
+  updateProduct: (id: string, product: Partial<DbProduct>) => Promise<void>;
   deleteProduct: (id: string) => Promise<void>;
 }
 
-const ProductContext = createContext<ProductContextType | undefined>(undefined);
+export const ProductContext = createContext<ProductContextType | undefined>(
+  undefined
+);
 
 export function ProductProvider({ children }: { children: React.ReactNode }) {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<DbProduct[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,55 +26,78 @@ export function ProductProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
       setError(null);
-      
+
       const { data, error: fetchError } = await supabase
-        .from('products')
-        .select('*');
+        .from("products")
+        .select("*");
 
       if (fetchError) throw new Error(fetchError.message);
-      
+
       setProducts(data || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred while fetching products');
+      setError(
+        err instanceof Error
+          ? err.message
+          : "An error occurred while fetching products"
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const addProduct = async (product: Omit<Product, 'id'>) => {
+  const fetchPopularProducts = async () => {
+    try {
+      const { data, error: fetchError } = await supabase
+        .from("products")
+        .select("*")
+        .eq("available", true)
+        .order("price", { ascending: false })
+        .limit(10);
+
+      if (fetchError) throw new Error(fetchError.message);
+      return data || [];
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to fetch popular products"
+      );
+      return [];
+    }
+  };
+
+  const addProduct = async (product: Omit<DbProduct, "id">) => {
     try {
       setError(null);
       const { data, error: insertError } = await supabase
-        .from('products')
+        .from("products")
         .insert([product])
         .select()
         .single();
 
       if (insertError) throw new Error(insertError.message);
-      
-      setProducts(prev => [...prev, data]);
+
+      setProducts((prev) => [...prev, data]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add product');
-      throw new Error('Failed to add product');
+      setError(err instanceof Error ? err.message : "Failed to add product");
+      throw new Error("Failed to add product");
     }
   };
 
-  const updateProduct = async (id: string, product: Partial<Product>) => {
+  const updateProduct = async (id: string, product: Partial<DbProduct>) => {
     try {
       setError(null);
       const { data, error: updateError } = await supabase
-        .from('products')
+        .from("products")
         .update(product)
-        .eq('id', id)
+        .eq("id", id)
         .select()
         .single();
 
       if (updateError) throw new Error(updateError.message);
-      
-      setProducts(prev => prev.map(p => p.id === id ? data : p));
+
+      setProducts((prev) => prev.map((p) => (p.id === id ? data : p)));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update product');
-      throw new Error('Failed to update product');
+      setError(err instanceof Error ? err.message : "Failed to update product");
+      throw new Error("Failed to update product");
     }
   };
 
@@ -88,38 +105,33 @@ export function ProductProvider({ children }: { children: React.ReactNode }) {
     try {
       setError(null);
       const { error: deleteError } = await supabase
-        .from('products')
+        .from("products")
         .delete()
-        .eq('id', id);
+        .eq("id", id);
 
       if (deleteError) throw new Error(deleteError.message);
-      
-      setProducts(prev => prev.filter(p => p.id !== id));
+
+      setProducts((prev) => prev.filter((p) => p.id !== id));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete product');
-      throw new Error('Failed to delete product');
+      setError(err instanceof Error ? err.message : "Failed to delete product");
+      throw new Error("Failed to delete product");
     }
   };
 
   return (
-    <ProductContext.Provider value={{
-      products,
-      loading,
-      error,
-      fetchProducts,
-      addProduct,
-      updateProduct,
-      deleteProduct
-    }}>
+    <ProductContext.Provider
+      value={{
+        products,
+        loading,
+        error,
+        fetchProducts,
+        fetchPopularProducts,
+        addProduct,
+        updateProduct,
+        deleteProduct,
+      }}
+    >
       {children}
     </ProductContext.Provider>
   );
-}
-
-export function useProducts() {
-  const context = useContext(ProductContext);
-  if (context === undefined) {
-    throw new Error('useProducts must be used within a ProductProvider');
-  }
-  return context;
 }
