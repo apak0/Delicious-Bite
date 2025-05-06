@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { Search, ShoppingBag } from "lucide-react";
-import MenuItemCard from "../components/MenuItemCard";
+import MenuItemCard, { MenuItemCardSkeleton } from "../components/MenuItemCard";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { useProducts } from "../hooks/useProducts";
@@ -37,12 +37,53 @@ export function MenuPage() {
         selectedCategory === "All" ||
         product.category === selectedCategory;
 
-      // Only show available products to customers
       return matchesSearch && matchesCategory && product.available;
     });
   }, [products, searchTerm, selectedCategory]);
 
   const cartItemsCount = cart.reduce((total, item) => total + item.quantity, 0);
+
+  // Show skeleton only on initial load
+  if (loading) {
+    return (
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+          <div>
+            <div className="h-8 w-48 bg-gray-200 rounded animate-pulse mb-2" />
+            <div className="h-4 w-96 bg-gray-200 rounded animate-pulse" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-1">
+            <div className="mb-6">
+              <div className="h-10 w-full bg-gray-200 rounded animate-pulse" />
+            </div>
+            <div className="space-y-2">
+              {Array(5)
+                .fill(0)
+                .map((_, index) => (
+                  <div
+                    key={index}
+                    className="h-10 bg-gray-200 rounded animate-pulse"
+                  />
+                ))}
+            </div>
+          </div>
+
+          <div className="lg:col-span-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array(6)
+                .fill(0)
+                .map((_, index) => (
+                  <MenuItemCardSkeleton key={index} />
+                ))}
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -61,31 +102,24 @@ export function MenuPage() {
             onClick={() => setIsCartOpen(true)}
           >
             <ShoppingBag className="mr-2 h-5 w-5" />
-            <span>Cart ({cartItemsCount})</span>
+            Cart {cartItemsCount > 0 && `(${cartItemsCount})`}
           </Button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-[250px_1fr] gap-8">
-        {/* Sidebar */}
-        <div className="bg-white p-4 rounded-lg shadow h-fit">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="lg:col-span-1">
           <div className="mb-6">
-            <label
-              htmlFor="search"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Search
-            </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-5 w-5 text-gray-400" />
               </div>
               <Input
-                id="search"
-                placeholder="Search dishes..."
-                className="pl-10"
+                type="text"
+                placeholder="Search menu..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
                 fullWidth
               />
             </div>
@@ -96,32 +130,44 @@ export function MenuPage() {
               Categories
             </h3>
             <div className="space-y-2">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  onClick={() =>
-                    setSelectedCategory(category === "All" ? "" : category)
-                  }
-                  className={`w-full text-left px-3 py-2 rounded-md text-sm ${
-                    (category === "All" && selectedCategory === "") ||
-                    category === selectedCategory
-                      ? "bg-red-50 text-red-700 font-medium"
-                      : "text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  {category}
-                </button>
-              ))}
+              {loading
+                ? // Skeleton loaders for categories
+                  Array(5)
+                    .fill(0)
+                    .map((_, index) => (
+                      <div
+                        key={index}
+                        className="h-10 bg-gray-200 rounded-md animate-pulse"
+                      />
+                    ))
+                : categories.map((category) => (
+                    <button
+                      key={category}
+                      onClick={() =>
+                        setSelectedCategory(category === "All" ? "" : category)
+                      }
+                      className={`w-full text-left px-3 py-2 rounded-md text-sm ${
+                        (category === "All" && selectedCategory === "") ||
+                        category === selectedCategory
+                          ? "bg-red-50 text-red-700 font-medium"
+                          : "text-gray-700 hover:bg-gray-50"
+                      }`}
+                    >
+                      {category}
+                    </button>
+                  ))}
             </div>
           </div>
         </div>
 
-        {/* Main content */}
-        <div>
+        <div className="lg:col-span-3">
           {loading ? (
-            <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-700"></div>
-              <p className="ml-3 text-gray-600">Loading menu items...</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array(6)
+                .fill(0)
+                .map((_, index) => (
+                  <MenuItemCardSkeleton key={index} />
+                ))}
             </div>
           ) : error ? (
             <div className="text-center py-12 bg-red-50 rounded-lg">
@@ -134,33 +180,26 @@ export function MenuPage() {
                 Try Again
               </Button>
             </div>
-          ) : filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredProducts.map((product) => (
-                <MenuItemCard key={product.id} product={product} />
-              ))}
-            </div>
           ) : (
-            <div className="text-center py-12">
-              <h2 className="text-lg font-medium text-gray-900">
-                No items found
-              </h2>
-              <p className="mt-1 text-gray-500">
-                Try adjusting your search or filter to find what you're looking
-                for.
-              </p>
-            </div>
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredProducts.map((product) => (
+                  <MenuItemCard key={product.id} product={product} />
+                ))}
+              </div>
+
+              {!loading && !error && filteredProducts.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-gray-500">No menu items found.</p>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
 
       {/* Shopping Cart */}
-      {isCartOpen && (
-        <ShoppingCart
-          isOpen={isCartOpen}
-          onClose={() => setIsCartOpen(false)}
-        />
-      )}
+      <ShoppingCart isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </main>
   );
 }

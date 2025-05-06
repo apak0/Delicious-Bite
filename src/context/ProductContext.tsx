@@ -1,4 +1,4 @@
-import { createContext, useState } from "react";
+import { createContext, useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import type { DbProduct } from "../types";
 
@@ -19,21 +19,29 @@ export const ProductContext = createContext<ProductContextType | undefined>(
 
 export function ProductProvider({ children }: { children: React.ReactNode }) {
   const [products, setProducts] = useState<DbProduct[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Initialize as true
   const [error, setError] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const fetchProducts = async () => {
-    try {
+    if (!isInitialized) {
       setLoading(true);
+    }
+
+    try {
       setError(null);
 
       const { data, error: fetchError } = await supabase
         .from("products")
         .select("*");
 
-      if (fetchError) throw new Error(fetchError.message);
+      if (fetchError) {
+        setError(fetchError.message);
+        return;
+      }
 
       setProducts(data || []);
+      setError(null);
     } catch (err) {
       setError(
         err instanceof Error
@@ -42,8 +50,14 @@ export function ProductProvider({ children }: { children: React.ReactNode }) {
       );
     } finally {
       setLoading(false);
+      setIsInitialized(true);
     }
   };
+
+  // Initial fetch on mount
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
   const fetchPopularProducts = async () => {
     try {
@@ -54,7 +68,12 @@ export function ProductProvider({ children }: { children: React.ReactNode }) {
         .order("price", { ascending: false })
         .limit(10);
 
-      if (fetchError) throw new Error(fetchError.message);
+      if (fetchError) {
+        setError(fetchError.message);
+        return [];
+      }
+
+      setError(null);
       return data || [];
     } catch (err) {
       setError(
@@ -73,9 +92,13 @@ export function ProductProvider({ children }: { children: React.ReactNode }) {
         .select()
         .single();
 
-      if (insertError) throw new Error(insertError.message);
+      if (insertError) {
+        setError(insertError.message);
+        return;
+      }
 
       setProducts((prev) => [...prev, data]);
+      setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to add product");
       throw new Error("Failed to add product");
@@ -92,9 +115,13 @@ export function ProductProvider({ children }: { children: React.ReactNode }) {
         .select()
         .single();
 
-      if (updateError) throw new Error(updateError.message);
+      if (updateError) {
+        setError(updateError.message);
+        return;
+      }
 
       setProducts((prev) => prev.map((p) => (p.id === id ? data : p)));
+      setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to update product");
       throw new Error("Failed to update product");
@@ -109,9 +136,13 @@ export function ProductProvider({ children }: { children: React.ReactNode }) {
         .delete()
         .eq("id", id);
 
-      if (deleteError) throw new Error(deleteError.message);
+      if (deleteError) {
+        setError(deleteError.message);
+        return;
+      }
 
       setProducts((prev) => prev.filter((p) => p.id !== id));
+      setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete product");
       throw new Error("Failed to delete product");

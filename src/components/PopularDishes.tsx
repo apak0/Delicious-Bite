@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import Slider from "react-slick";
-import { DollarSign } from "lucide-react";
+import { DollarSign, ArrowRight } from "lucide-react";
 import { Card, CardImage, CardContent } from "./ui/Card";
+import { Button } from "./ui/Button";
 import { useProducts } from "../hooks/useProducts";
 import { formatCurrency } from "../utils/formatters";
 import type { DbProduct } from "../types";
@@ -25,7 +27,7 @@ export function PopularDishes() {
     slidesToShow: 4,
     slidesToScroll: 1,
     autoplay: true,
-    autoplaySpeed: 3000,
+    autoplaySpeed: 1000,
     responsive: [
       {
         breakpoint: 1024,
@@ -62,7 +64,7 @@ export function PopularDishes() {
           <Slider {...settings} className="popular-dishes-slider -mx-2">
             {popularProducts.map((product) => (
               <div key={product.id} className="px-2">
-                <Card className="h-full bg-white">
+                <Card className="h-full bg-blue">
                   <div className="relative">
                     <CardImage
                       src={product.image_url}
@@ -86,6 +88,14 @@ export function PopularDishes() {
               </div>
             ))}
           </Slider>
+        </div>
+        <div className="mt-10 text-center">
+          <Link to="/menu">
+            <Button variant="primary" className="inline-flex items-center">
+              View Full Menu
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </Link>
         </div>
       </div>
     </section>

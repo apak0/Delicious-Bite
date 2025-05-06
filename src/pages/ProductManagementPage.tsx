@@ -37,11 +37,6 @@ export default function ProductManagementPage() {
   const [sortBy, setSortBy] = useState("name-asc");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
-  // Load products on component mount
-  useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
-
   // Get unique categories from products for filter dropdown
   const categories = useMemo(() => {
     const uniqueCategories = new Set<string>();
