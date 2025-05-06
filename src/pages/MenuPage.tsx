@@ -4,7 +4,7 @@ import MenuItemCard from "../components/MenuItemCard";
 import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { useProducts } from "../context/ProductContext";
-import { useOrders } from "../context/OrderContext";
+import { useOrders } from "../hooks/useOrders";
 import { ShoppingCart } from "../components/ShoppingCart";
 
 export function MenuPage() {

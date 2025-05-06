@@ -3,7 +3,7 @@ import { DollarSign, Tag, Plus, Minus, ShoppingBag } from "lucide-react";
 import { Button } from "./ui/Button";
 import { Card, CardImage, CardContent, CardFooter } from "./ui/Card";
 import { formatCurrency } from "../utils/formatters";
-import { useOrders } from "../context/OrderContext";
+import { useOrders } from "../hooks/useOrders";
 
 interface Product {
   id: string;

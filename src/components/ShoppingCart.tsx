@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { ShoppingBag, X, Plus, Minus, Trash2 } from "lucide-react";
 import { Button } from "./ui/Button";
 import { Input, Textarea } from "./ui/Input";
-import { useOrders } from "../context/OrderContext";
+import { useOrders } from "../hooks/useOrders";
 import { formatCurrency } from "../utils/formatters";
 import { useToast } from "./ui/Toast";
 import { useAuth } from "../context/AuthContext";
@@ -91,6 +91,12 @@ export function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
         return;
       }
 
+      // Check if cart is empty
+      if (cart.length === 0) {
+        showToast("Your cart is empty", "error");
+        return;
+      }
+
       // If user is logged in, proceed to checkout step
       setCheckoutStep(2);
 
@@ -102,10 +108,18 @@ export function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
       return;
     }
 
-    if (!validateForm()) return;
+    if (!validateForm()) {
+      showToast("Please fill in all required fields correctly", "error");
+      return;
+    }
 
     try {
       setIsSubmitting(true);
+
+      // Validate cart one more time before submission
+      if (cart.length === 0) {
+        throw new Error("Cart is empty");
+      }
 
       // Create new order
       const result = await orderDispatch({
@@ -132,14 +146,24 @@ export function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
         setCustomerPhone("");
         setCustomerAddress("");
         setCheckoutStep(1);
+        setErrors({
+          customerName: "",
+          customerPhone: "",
+          customerAddress: "",
+        });
 
         // Close the cart
         onClose();
+
+        // Navigate to order tracking
+        navigate(`/orders?orderId=${result.id}`);
       } else {
-        showToast("Something went wrong. Please try again.", "error");
+        throw new Error("Failed to create order");
       }
     } catch (error) {
-      showToast("Failed to place your order. Please try again.", "error");
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to place your order";
+      showToast(errorMessage, "error");
       console.error("Checkout error:", error);
     } finally {
       setIsSubmitting(false);
@@ -303,7 +327,6 @@ export function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                     placeholder="e.g., 555-123-4567"
                     error={errors.customerPhone}
                     fullWidth
-                    required
                   />
 
                   <Input

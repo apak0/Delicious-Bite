@@ -4,7 +4,7 @@ import { ShoppingBag, Menu, X, UserCircle, LogOut } from "lucide-react";
 import { Button } from "./ui/Button";
 import { Badge } from "./ui/Badge";
 import { ShoppingCart } from "./ShoppingCart";
-import { useOrders } from "../context/OrderContext";
+import { useOrders } from "../hooks/useOrders";
 import { useAuth } from "../context/AuthContext";
 
 export function Header() {

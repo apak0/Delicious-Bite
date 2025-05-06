@@ -1,13 +1,5 @@
-import React, {
-  createContext,
-  useContext,
-  useReducer,
-  useState,
-  useEffect,
-} from "react";
-import { Order, CartItem, OrderStatus } from "../types";
-import { initialOrders } from "../data/initialData";
-import { v4 as uuidv4 } from "uuid";
+import React, { createContext, useReducer, useState, useEffect } from "react";
+import { Order, CartItem, OrderStatus, OrderItem, DbOrder } from "../types";
 import { supabase } from "../lib/supabase";
 
 // Define types for the context
@@ -46,8 +38,11 @@ type OrderContextType = {
   fetchOrders: () => Promise<void>;
 };
 
-// Create the context
-const OrderContext = createContext<OrderContextType | undefined>(undefined);
+// Export the context and its type
+export type { OrderContextType };
+export const OrderContext = createContext<OrderContextType | undefined>(
+  undefined
+);
 
 // Load cart from localStorage
 const loadCartFromStorage = (): CartItem[] => {
@@ -72,235 +67,6 @@ const saveCartToStorage = (cart: CartItem[]): void => {
     console.error("Error saving cart to localStorage:", error);
   }
 };
-
-// Create provider component
-export function OrderProvider({ children }: { children: React.ReactNode }) {
-  const [orders, setOrders] = useState<Order[]>(initialOrders);
-  const [cart, dispatch] = useReducer(cartReducer, [], loadCartFromStorage);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Save cart to localStorage whenever it changes
-  useEffect(() => {
-    saveCartToStorage(cart);
-  }, [cart]);
-
-  // Create a wrapper for cartDispatch that will also save to localStorage
-  const cartDispatch: CartDispatch = (action) => {
-    dispatch(action);
-  };
-
-  // Calculate cart total
-  const cartTotal = cart.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  );
-
-  const fetchOrders = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const { data, error: fetchError } = await supabase
-        .from("orders")
-        .select("*, order_items(*)");
-
-      if (fetchError) throw new Error(fetchError.message);
-
-      setOrders(data || []);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "An error occurred while fetching orders"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Create an async orderDispatch function to handle database operations
-  const orderDispatch: OrderDispatch = async (action) => {
-    switch (action.type) {
-      case "ADD_ORDER": {
-        try {
-          setLoading(true);
-          setError(null);
-
-          const now = new Date().toISOString();
-
-          // Create the order data object
-          const dbOrderData = {
-            id: uuidv4(),
-            created_at: now,
-            updated_at: now,
-            status: action.payload.status,
-            customer_name: action.payload.customerName,
-            customer_phone: action.payload.customerPhone,
-            customer_address: action.payload.customerAddress,
-            total_amount: action.payload.totalAmount,
-          };
-
-          // Extract order_items from the payload
-          const { items } = action.payload;
-
-          console.log("Submitting order:", dbOrderData);
-
-          // Insert the order with proper field names
-          const { data, error: orderError } = await supabase
-            .from("orders")
-            .insert([dbOrderData])
-            .select()
-            .single();
-
-          if (orderError) {
-            console.error("Order insertion error:", orderError);
-            throw new Error(orderError.message);
-          }
-
-          console.log("Order created successfully:", data);
-
-          // Insert the order items
-          if (items && items.length > 0) {
-            const orderItems = items.map((item) => ({
-              order_id: data.id,
-              product_id: item.id,
-              quantity: item.quantity,
-              price: item.price,
-              special_instructions: item.specialInstructions || null,
-            }));
-
-            console.log("Creating order items:", orderItems);
-
-            const { error: itemsError } = await supabase
-              .from("order_items")
-              .insert(orderItems);
-
-            if (itemsError) {
-              console.error("Order items insertion error:", itemsError);
-              throw new Error(itemsError.message);
-            }
-
-            console.log("Order items created successfully");
-          }
-
-          // Convert from database format back to application format for local state
-          const newOrder = {
-            ...action.payload,
-            id: data.id,
-            createdAt: data.created_at,
-            updatedAt: data.updated_at,
-          };
-
-          // Update the local state
-          setOrders((prev) => [...prev, newOrder]);
-          return data;
-        } catch (err) {
-          console.error("Complete error object:", err);
-          setError(err instanceof Error ? err.message : "Failed to add order");
-          return null;
-        } finally {
-          setLoading(false);
-        }
-        break;
-      }
-
-      case "UPDATE_ORDER_STATUS": {
-        try {
-          setLoading(true);
-          setError(null);
-
-          const { id, status } = action.payload;
-          const updated_at = new Date().toISOString();
-
-          const { data, error: updateError } = await supabase
-            .from("orders")
-            .update({ status, updated_at })
-            .eq("id", id)
-            .select()
-            .single();
-
-          if (updateError) throw new Error(updateError.message);
-
-          // Update the local state
-          setOrders((prev) =>
-            prev.map((order) =>
-              order.id === id ? { ...order, status, updated_at } : order
-            )
-          );
-
-          return data;
-        } catch (err) {
-          setError(
-            err instanceof Error ? err.message : "Failed to update order status"
-          );
-          return null;
-        } finally {
-          setLoading(false);
-        }
-        break;
-      }
-
-      case "DELETE_ORDER": {
-        try {
-          setLoading(true);
-          setError(null);
-
-          const id = action.payload;
-
-          // Delete the order items first due to foreign key constraint
-          const { error: itemsDeleteError } = await supabase
-            .from("order_items")
-            .delete()
-            .eq("order_id", id);
-
-          if (itemsDeleteError) throw new Error(itemsDeleteError.message);
-
-          // Delete the order
-          const { data, error: deleteError } = await supabase
-            .from("orders")
-            .delete()
-            .eq("id", id)
-            .select()
-            .single();
-
-          if (deleteError) throw new Error(deleteError.message);
-
-          // Update the local state
-          setOrders((prev) => prev.filter((order) => order.id !== id));
-
-          return data;
-        } catch (err) {
-          setError(
-            err instanceof Error ? err.message : "Failed to delete order"
-          );
-          return null;
-        } finally {
-          setLoading(false);
-        }
-        break;
-      }
-
-      default:
-        return null;
-    }
-  };
-
-  const value = {
-    orders,
-    cart,
-    orderDispatch,
-    cartDispatch,
-    cartTotal,
-    loading,
-    error,
-    fetchOrders,
-  };
-
-  return (
-    <OrderContext.Provider value={value}>{children}</OrderContext.Provider>
-  );
-}
 
 // Cart reducer function
 function cartReducer(state: CartItem[], action: CartAction): CartItem[] {
@@ -337,11 +103,261 @@ function cartReducer(state: CartItem[], action: CartAction): CartItem[] {
   }
 }
 
-// Create hook for using the context
-export function useOrders() {
-  const context = useContext(OrderContext);
-  if (context === undefined) {
-    throw new Error("useOrders must be used within an OrderProvider");
-  }
-  return context;
+// Create provider component
+export function OrderProvider({ children }: { children: React.ReactNode }) {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [cart, dispatch] = useReducer(cartReducer, [], loadCartFromStorage);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Save cart to localStorage whenever it changes
+  useEffect(() => {
+    saveCartToStorage(cart);
+  }, [cart]);
+
+  // Create a wrapper for cartDispatch that will also save to localStorage
+  const cartDispatch: CartDispatch = (action) => {
+    dispatch(action);
+  };
+
+  // Calculate cart total
+  const cartTotal = cart.reduce(
+    (total, item) => total + item.price * item.quantity,
+    0
+  );
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+      if (userError) throw new Error(userError.message);
+      if (!user) {
+        setOrders([]);
+        return;
+      }
+
+      // Get user role
+      const { data: userData, error: roleError } = await supabase
+        .from("users")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (roleError) throw new Error(roleError.message);
+
+      // Build the query based on user role
+      let query = supabase.from("orders").select(`
+          *,
+          order_items:order_items (
+            *,
+            product:products (*)
+          )
+        `);
+
+      // If user is not staff/admin, only show their own orders
+      if (userData.role === "customer") {
+        query = query.eq("user_id", user.id);
+      }
+
+      // Execute the query with sorting
+      const { data: ordersData, error: fetchError } = await query.order(
+        "created_at",
+        { ascending: false }
+      );
+
+      if (fetchError) throw new Error(fetchError.message);
+
+      // Transform the data to match your application's format
+      const transformedOrders =
+        ordersData?.map((order: DbOrder) => ({
+          id: order.id,
+          status: order.status,
+          customerName: order.customer_name,
+          customerPhone: order.customer_phone,
+          customerAddress: order.customer_address,
+          totalAmount: order.total_amount,
+          createdAt: order.created_at,
+          updatedAt: order.updated_at,
+          userId: order.user_id,
+          items: order.order_items.map((item: OrderItem) => ({
+            id: item.product_id,
+            name: item.product.name,
+            description: item.product.description,
+            price: item.price,
+            quantity: item.quantity,
+            imageUrl: item.product.image_url,
+            category: item.product.category,
+            available: item.product.available,
+            specialInstructions: item.special_instructions,
+          })),
+        })) || [];
+
+      setOrders(transformedOrders);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "An error occurred while fetching orders"
+      );
+      console.error("Error fetching orders:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Create the orderDispatch function
+  const orderDispatch: OrderDispatch = async (action) => {
+    switch (action.type) {
+      case "ADD_ORDER": {
+        try {
+          setLoading(true);
+          setError(null);
+
+          const {
+            data: { user },
+            error: userError,
+          } = await supabase.auth.getUser();
+          if (userError) throw new Error(userError.message);
+          if (!user) throw new Error("User not found");
+
+          const now = new Date().toISOString();
+          const order = {
+            ...action.payload,
+            id: crypto.randomUUID(),
+            createdAt: now,
+            updatedAt: now,
+            userId: user.id,
+          };
+
+          // Add the order
+          const { error: orderError } = await supabase.from("orders").insert([
+            {
+              id: order.id,
+              status: order.status,
+              customer_name: order.customerName,
+              customer_phone: order.customerPhone,
+              customer_address: order.customerAddress,
+              total_amount: order.totalAmount,
+              created_at: order.createdAt,
+              updated_at: order.updatedAt,
+              user_id: order.userId,
+            },
+          ]);
+
+          if (orderError) throw orderError;
+
+          // Add order items
+          const orderItems = order.items.map((item) => ({
+            order_id: order.id,
+            product_id: item.id,
+            quantity: item.quantity,
+            price: item.price,
+            special_instructions: item.specialInstructions,
+          }));
+
+          const { error: itemsError } = await supabase
+            .from("order_items")
+            .insert(orderItems);
+
+          if (itemsError) throw itemsError;
+
+          // Update local state
+          setOrders((prev) => [order, ...prev]);
+          return order;
+        } catch (err) {
+          setError(
+            err instanceof Error ? err.message : "Failed to create order"
+          );
+          console.error("Order creation error:", err);
+          return null;
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      case "UPDATE_ORDER_STATUS": {
+        try {
+          setLoading(true);
+          setError(null);
+
+          const { id, status } = action.payload;
+          const now = new Date().toISOString();
+
+          const { error } = await supabase
+            .from("orders")
+            .update({ status, updated_at: now })
+            .eq("id", id);
+
+          if (error) throw error;
+
+          // Update local state
+          setOrders((prevOrders) => {
+            return prevOrders.map((order) =>
+              order.id === id ? { ...order, status, updatedAt: now } : order
+            );
+          });
+
+          // Find and return the updated order
+          return orders.find((order: Order) => order.id === id) || null;
+        } catch (err) {
+          setError(
+            err instanceof Error ? err.message : "Failed to update order status"
+          );
+          return null;
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      case "DELETE_ORDER": {
+        try {
+          setLoading(true);
+          setError(null);
+
+          const { error } = await supabase
+            .from("orders")
+            .delete()
+            .eq("id", action.payload);
+
+          if (error) throw error;
+
+          // Update local state
+          setOrders((prev) =>
+            prev.filter((order) => order.id !== action.payload)
+          );
+          return null;
+        } catch (err) {
+          setError(
+            err instanceof Error ? err.message : "Failed to delete order"
+          );
+          return null;
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      default:
+        return null;
+    }
+  };
+
+  const value = {
+    orders,
+    cart,
+    orderDispatch,
+    cartDispatch,
+    cartTotal,
+    loading,
+    error,
+    fetchOrders,
+  };
+
+  return (
+    <OrderContext.Provider value={value}>{children}</OrderContext.Provider>
+  );
 }
