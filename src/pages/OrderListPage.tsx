@@ -1,21 +1,46 @@
-import React, { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ArrowUp, ArrowDown, Filter, RefreshCw } from "lucide-react";
 import { OrderCard } from "../components/OrderCard";
 import { Button } from "../components/ui/Button";
 import { Select } from "../components/ui/Input";
 import { useOrders } from "../hooks/useOrders";
-import { formatDate } from "../utils/formatters";
 import { OrderStatus } from "../types";
 
 export function OrderListPage() {
-  const { orders, fetchOrders, loading, error } = useOrders();
+  const { orders, fetchOrders } = useOrders();
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
+  const [expandedOrderIds, setExpandedOrderIds] = useState<Set<string>>(
+    new Set()
+  );
 
   // Fetch orders when component mounts
   useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [fetchOrders]);
+
+  // Initialize expanded state with the latest order
+  useEffect(() => {
+    if (orders.length > 0) {
+      const latestOrder = [...orders].sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )[0];
+      setExpandedOrderIds(new Set([latestOrder.id]));
+    }
+  }, [orders]);
+
+  const toggleOrderExpansion = (orderId: string) => {
+    setExpandedOrderIds((prev) => {
+      const newSet = new Set(prev);
+      if (prev.has(orderId)) {
+        newSet.delete(orderId);
+      } else {
+        newSet.add(orderId);
+      }
+      return newSet;
+    });
+  };
 
   // Filtered and sorted orders
   const filteredOrders = useMemo(() => {
@@ -155,7 +180,13 @@ export function OrderListPage() {
       {filteredOrders.length > 0 ? (
         <div className="space-y-6">
           {filteredOrders.map((order) => (
-            <OrderCard key={order.id} order={order} isAdmin={true} />
+            <OrderCard
+              key={order.id}
+              order={order}
+              isAdmin={true}
+              isExpanded={expandedOrderIds.has(order.id)}
+              onToggle={() => toggleOrderExpansion(order.id)}
+            />
           ))}
         </div>
       ) : (

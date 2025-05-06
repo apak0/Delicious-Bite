@@ -83,14 +83,15 @@
 .popular-dishes-slider .slick-arrow {
   width: 40px;
   height: 40px;
-  background-color: white;
+  background-color: #dc2626; /* Changed to red-600 color */
   border-radius: 50%;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   z-index: 10;
+  transition: background-color 0.2s ease;
 }
 
 .popular-dishes-slider .slick-arrow:hover {
-  background-color: white;
+  background-color: #b91c1c; /* Changed to red-700 color for hover state */
 }
 
 .popular-dishes-slider .slick-prev {
@@ -102,7 +103,7 @@
 }
 
 .popular-dishes-slider .slick-arrow:before {
-  color: #4b5563;
+  color: white; /* Changed arrow color to white for better contrast */
   font-size: 20px;
 }
 
