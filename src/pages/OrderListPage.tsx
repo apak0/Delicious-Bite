@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { ArrowUp, ArrowDown, Filter, RefreshCw } from "lucide-react";
 import { OrderCard } from "../components/OrderCard";
 import { Button } from "../components/ui/Button";
@@ -21,7 +21,7 @@ export function OrderListPage() {
 
   // Initialize expanded state with the latest order
   useEffect(() => {
-    if (orders.length > 0) {
+    if (orders.length > 0 && expandedOrderIds.size === 0) {
       const latestOrder = [...orders].sort(
         (a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -30,7 +30,7 @@ export function OrderListPage() {
     }
   }, [orders]);
 
-  const toggleOrderExpansion = (orderId: string) => {
+  const toggleOrderExpansion = useCallback((orderId: string) => {
     setExpandedOrderIds((prev) => {
       const newSet = new Set(prev);
       if (prev.has(orderId)) {
@@ -40,7 +40,7 @@ export function OrderListPage() {
       }
       return newSet;
     });
-  };
+  }, []);
 
   // Filtered and sorted orders
   const filteredOrders = useMemo(() => {

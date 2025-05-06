@@ -181,7 +181,10 @@ export function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
       />
 
       {/* Cart panel */}
-      <div className="relative w-full max-w-md bg-white h-full overflow-y-auto shadow-xl transition-transform transform duration-300 ease-in-out">
+      <div
+        className="relative w-full max-w-md bg-white h-full overflow-y-auto shadow-xl transition-transform transform duration-300 ease-in-out"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900 flex items-center">
             <ShoppingBag className="mr-2" size={20} />
