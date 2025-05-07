@@ -165,9 +165,7 @@ export function Header() {
                 className="flex items-center focus:outline-none"
                 onClick={toggleUserMenu}
               >
-                {user && (
-                  <UserCircle className="h-8 w-8 text-gray-400 hover:text-red-600" />
-                )}
+                <UserCircle className="h-8 w-8 text-gray-400 hover:text-red-600" />
               </button>
 
               <AnimatePresence>
