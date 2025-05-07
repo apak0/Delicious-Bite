@@ -1,5 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
+import { useScrollToTop } from "../../hooks/useScrollToTop";
 
 // Animation variants for page transitions
 const pageVariants = {
@@ -28,6 +29,9 @@ interface PageTransitionProps {
 }
 
 export function PageTransition({ children }: PageTransitionProps) {
+  // Apply smooth scroll to top on route changes
+  useScrollToTop();
+
   return (
     <motion.div
       initial="initial"

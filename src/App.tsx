@@ -16,6 +16,9 @@ import { OrderListPage } from "./pages/OrderListPage";
 import { ProductManagementPage } from "./pages/ProductManagementPage";
 import { LoginPage } from "./pages/LoginPage";
 import { SignupPage } from "./pages/SignupPage";
+import { AboutUsPage } from "./pages/AboutUsPage";
+import { PrivacyPolicyPage } from "./pages/PrivacyPolicyPage";
+import { TermsConditionsPage } from "./pages/TermsConditionsPage";
 import { ProductProvider } from "./context/ProductContext";
 import { OrderProvider } from "./context/OrderContext";
 import { AuthProvider } from "./context/AuthContext";
@@ -82,6 +85,30 @@ function AnimatedRoutes() {
           element={
             <PageTransition>
               <SignupPage />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/about-us"
+          element={
+            <PageTransition>
+              <AboutUsPage />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/privacy-policy"
+          element={
+            <PageTransition>
+              <PrivacyPolicyPage />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/terms-conditions"
+          element={
+            <PageTransition>
+              <TermsConditionsPage />
             </PageTransition>
           }
         />
