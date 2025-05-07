@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, AlertCircle } from "lucide-react";
 import { Button } from "../components/ui/Button";
@@ -14,6 +14,15 @@ export function LoginPage() {
   const { signIn } = useAuth();
   const navigate = useNavigate();
 
+  // Load saved email from localStorage on component mount
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("rememberedEmail");
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -21,6 +30,14 @@ export function LoginPage() {
 
     try {
       await signIn(email, password, rememberMe);
+
+      // Save or remove email based on remember me checkbox
+      if (rememberMe) {
+        localStorage.setItem("rememberedEmail", email);
+      } else {
+        localStorage.removeItem("rememberedEmail");
+      }
+
       navigate("/");
     } catch (err: any) {
       if (err?.message?.includes("invalid_credentials")) {
@@ -35,10 +52,10 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+      <div className="max-w-md w-full">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to your account
+            Sign in
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
             Or{" "}
@@ -126,15 +143,6 @@ export function LoginPage() {
             </Button>
           </div>
         </form>
-
-        <div className="mt-4 text-center">
-          <p className="text-sm text-gray-600">Demo Accounts:</p>
-          <div className="mt-2 space-y-1 text-sm text-gray-500">
-            <p>Customer: customer@example.com / password</p>
-            <p>Staff: staff@example.com / password</p>
-            <p>Admin: admin@example.com / password</p>
-          </div>
-        </div>
       </div>
     </div>
   );

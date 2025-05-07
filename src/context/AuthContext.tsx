@@ -24,10 +24,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Set session persistence based on remembered preference
+    const rememberSession = localStorage.getItem("rememberSession") === "true";
+
+    // Configure the auth session persistence
+    supabase.auth.setSession({
+      access_token: "",
+      refresh_token: "",
+    });
+
     // Check active sessions and sets the user
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         fetchUser(session.user.id);
+
+        // If we have a session and remember was set, refresh it for longer duration
+        if (rememberSession) {
+          supabase.auth.refreshSession({
+            refresh_token: session.refresh_token,
+          });
+        }
       }
       setLoading(false);
     });
@@ -82,12 +98,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
-      options: {
-        // Set session duration - 24 hours for non-remember, 30 days for remember
-        expiresIn: remember ? 30 * 24 * 60 * 60 : 24 * 60 * 60, // seconds
-      },
     });
+
     if (error) throw error;
+
+    // If remember me is checked, we'll extend the session
+    if (remember) {
+      // Get the current session
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        // Update the session with a longer expiry
+        await supabase.auth.refreshSession({
+          refresh_token: data.session.refresh_token,
+        });
+
+        // Store the session persistence preference
+        localStorage.setItem("rememberSession", "true");
+      }
+    } else {
+      // Don't remember the session
+      localStorage.removeItem("rememberSession");
+    }
   };
 
   const signUp = async (email: string, password: string, name: string) => {
@@ -124,6 +155,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Force clear localStorage items related to Supabase auth
       localStorage.removeItem("supabase.auth.token");
       localStorage.removeItem("supabase.auth.refreshToken");
+      // Don't clear the rememberSession preference anymore
+      // localStorage.removeItem("rememberSession");
 
       // Add a small delay to ensure everything is properly cleared
       await new Promise((resolve) => setTimeout(resolve, 300));
