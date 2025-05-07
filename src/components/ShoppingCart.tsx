@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { ShoppingBag, X, Plus, Minus, Trash2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "./ui/Button";
 import { Input, Textarea } from "./ui/Input";
 import { useOrders } from "../hooks/useOrders";
@@ -7,6 +8,47 @@ import { formatCurrency } from "../utils/formatters";
 import { useToast } from "./ui/Toast";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+
+// Animation variants
+const backdropVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.3 } },
+  exit: { opacity: 0, transition: { duration: 0.3 } },
+};
+
+const cartVariants = {
+  hidden: { x: "100%" },
+  visible: {
+    x: 0,
+    transition: {
+      type: "spring",
+      stiffness: 300,
+      damping: 30,
+    },
+  },
+  exit: {
+    x: "100%",
+    transition: {
+      type: "spring",
+      stiffness: 300,
+      damping: 30,
+      duration: 0.3,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      delay: i * 0.1,
+      duration: 0.3,
+    },
+  }),
+  exit: { opacity: 0, y: 20, transition: { duration: 0.2 } },
+};
 
 interface ShoppingCartProps {
   isOpen: boolean;
@@ -173,211 +215,269 @@ export function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end">
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-        onClick={onClose}
-      />
-
-      {/* Cart panel */}
-      <div
-        className="relative w-full max-w-md bg-white h-full overflow-y-auto shadow-xl transition-transform transform duration-300 ease-in-out"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center">
-            <ShoppingBag className="mr-2" size={20} />
-            Your Order
-          </h2>
-          <button
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          {/* Backdrop */}
+          <motion.div
+            className="fixed inset-0 bg-black bg-opacity-50"
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-500"
+            variants={backdropVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+          />
+
+          {/* Cart panel */}
+          <motion.div
+            className="relative w-full max-w-md bg-white h-full overflow-y-auto shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+            variants={cartVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
           >
-            <X size={20} />
-          </button>
-        </div>
+            <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
+              <motion.h2
+                className="text-lg font-semibold text-gray-900 flex items-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1, transition: { delay: 0.2 } }}
+              >
+                <ShoppingBag className="mr-2" size={20} />
+                Your Order
+              </motion.h2>
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <X size={20} />
+              </button>
+            </div>
 
-        {cart.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64">
-            <ShoppingBag size={64} className="text-gray-300 mb-4" />
-            <p className="text-gray-500 text-lg">Your cart is empty</p>
-            <Button variant="outline" className="mt-4" onClick={onClose}>
-              Continue Shopping
-            </Button>
-          </div>
-        ) : (
-          <div className="flex flex-col h-full">
-            {checkoutStep === 1 ? (
-              <>
-                <div className="flex-1 px-4 py-4 overflow-y-auto">
-                  <ul className="divide-y divide-gray-200">
-                    {cart.map((item) => (
-                      <li key={item.id} className="py-4">
-                        <div className="flex flex-col space-y-3">
-                          <div className="flex justify-between">
-                            <div className="flex-1 pr-4">
-                              <h3 className="text-base font-medium text-gray-900">
-                                {item.name}
-                              </h3>
-                              <p className="mt-1 text-sm text-gray-500 line-clamp-1">
-                                {item.description}
-                              </p>
-                            </div>
-                            <p className="text-base font-medium text-gray-900">
-                              {formatCurrency(item.price * item.quantity)}
-                            </p>
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center border border-gray-300 rounded-md">
-                              <button
-                                className="px-2 py-1 text-gray-600 hover:text-gray-900"
-                                onClick={() =>
-                                  handleUpdateQuantity(
-                                    item.id,
-                                    item.quantity - 1
-                                  )
-                                }
-                                disabled={item.quantity <= 1}
-                              >
-                                <Minus size={16} />
-                              </button>
-                              <span className="px-4 py-1 text-gray-900">
-                                {item.quantity}
-                              </span>
-                              <button
-                                className="px-2 py-1 text-gray-600 hover:text-gray-900"
-                                onClick={() =>
-                                  handleUpdateQuantity(
-                                    item.id,
-                                    item.quantity + 1
-                                  )
-                                }
-                              >
-                                <Plus size={16} />
-                              </button>
-                            </div>
-
-                            <button
-                              className="text-red-600 hover:text-red-800"
-                              onClick={() => handleRemoveItem(item.id)}
-                            >
-                              <Trash2 size={18} />
-                            </button>
-                          </div>
-
-                          <Textarea
-                            placeholder="Special instructions"
-                            value={item.specialInstructions || ""}
-                            onChange={(e) =>
-                              handleUpdateInstructions(item.id, e.target.value)
-                            }
-                            className="text-sm"
-                            rows={2}
-                          />
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="border-t border-gray-200 px-4 py-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="text-base font-medium text-gray-900">
-                      Subtotal
-                    </span>
-                    <span className="text-base font-medium text-gray-900">
-                      {formatCurrency(cartTotal)}
-                    </span>
-                  </div>
-                  <Button
-                    variant="primary"
-                    className="w-full"
-                    onClick={handleCheckout}
-                  >
-                    Checkout
-                  </Button>
-                </div>
-              </>
+            {cart.length === 0 ? (
+              <motion.div
+                className="flex flex-col items-center justify-center h-64"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{
+                  opacity: 1,
+                  scale: 1,
+                  transition: { delay: 0.1, duration: 0.3 },
+                }}
+              >
+                <ShoppingBag size={64} className="text-gray-300 mb-4" />
+                <p className="text-gray-500 text-lg">Your cart is empty</p>
+                <Button variant="outline" className="mt-4" onClick={onClose}>
+                  Continue Shopping
+                </Button>
+              </motion.div>
             ) : (
-              <div className="flex-1 px-4 py-4 overflow-y-auto">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">
-                  Complete Your Order
-                </h3>
+              <div className="flex flex-col h-full">
+                {checkoutStep === 1 ? (
+                  <>
+                    <div className="flex-1 px-4 py-4 overflow-y-auto">
+                      <AnimatePresence>
+                        <ul className="divide-y divide-gray-200">
+                          {cart.map((item, index) => (
+                            <motion.li
+                              key={item.id}
+                              className="py-4"
+                              custom={index}
+                              variants={itemVariants}
+                              initial="hidden"
+                              animate="visible"
+                              exit="exit"
+                              layout
+                            >
+                              <div className="flex flex-col space-y-3">
+                                <div className="flex justify-between">
+                                  <div className="flex-1 pr-4">
+                                    <h3 className="text-base font-medium text-gray-900">
+                                      {item.name}
+                                    </h3>
+                                    <p className="mt-1 text-sm text-gray-500 line-clamp-1">
+                                      {item.description}
+                                    </p>
+                                  </div>
+                                  <p className="text-base font-medium text-gray-900">
+                                    {formatCurrency(item.price * item.quantity)}
+                                  </p>
+                                </div>
 
-                <form
-                  className="space-y-4"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleCheckout();
-                  }}
-                >
-                  <Input
-                    label="Your Name"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    error={errors.customerName}
-                    fullWidth
-                    required
-                  />
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center border border-gray-300 rounded-md">
+                                    <button
+                                      className="px-2 py-1 text-gray-600 hover:text-gray-900"
+                                      onClick={() =>
+                                        handleUpdateQuantity(
+                                          item.id,
+                                          item.quantity - 1
+                                        )
+                                      }
+                                      disabled={item.quantity <= 1}
+                                    >
+                                      <Minus size={16} />
+                                    </button>
+                                    <span className="px-4 py-1 text-gray-900">
+                                      {item.quantity}
+                                    </span>
+                                    <button
+                                      className="px-2 py-1 text-gray-600 hover:text-gray-900"
+                                      onClick={() =>
+                                        handleUpdateQuantity(
+                                          item.id,
+                                          item.quantity + 1
+                                        )
+                                      }
+                                    >
+                                      <Plus size={16} />
+                                    </button>
+                                  </div>
 
-                  <Input
-                    label="Phone Number"
-                    type="tel"
-                    value={customerPhone}
-                    onChange={(e) => setCustomerPhone(e.target.value)}
-                    placeholder="e.g., 555-123-4567"
-                    error={errors.customerPhone}
-                    fullWidth
-                  />
+                                  <button
+                                    className="text-red-600 hover:text-red-800"
+                                    onClick={() => handleRemoveItem(item.id)}
+                                  >
+                                    <Trash2 size={18} />
+                                  </button>
+                                </div>
 
-                  <Input
-                    label="Delivery Address"
-                    value={customerAddress}
-                    onChange={(e) => setCustomerAddress(e.target.value)}
-                    placeholder="Your full delivery address"
-                    error={errors.customerAddress}
-                    fullWidth
-                    required
-                  />
-
-                  <div className="border-t border-gray-200 pt-4 mt-4">
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="text-base font-medium text-gray-900">
-                        Total
-                      </span>
-                      <span className="text-base font-medium text-gray-900">
-                        {formatCurrency(cartTotal)}
-                      </span>
+                                <Textarea
+                                  placeholder="Special instructions"
+                                  value={item.specialInstructions || ""}
+                                  onChange={(e) =>
+                                    handleUpdateInstructions(
+                                      item.id,
+                                      e.target.value
+                                    )
+                                  }
+                                  className="text-sm"
+                                  rows={2}
+                                />
+                              </div>
+                            </motion.li>
+                          ))}
+                        </ul>
+                      </AnimatePresence>
                     </div>
 
-                    <div className="flex space-x-4">
-                      <Button
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => setCheckoutStep(1)}
-                        type="button"
-                        disabled={isSubmitting}
-                      >
-                        Back
-                      </Button>
+                    <motion.div
+                      className="border-t border-gray-200 px-4 py-4"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{
+                        opacity: 1,
+                        y: 0,
+                        transition: { delay: 0.3, duration: 0.3 },
+                      }}
+                    >
+                      <div className="flex justify-between items-center mb-4">
+                        <span className="text-base font-medium text-gray-900">
+                          Subtotal
+                        </span>
+                        <span className="text-base font-medium text-gray-900">
+                          {formatCurrency(cartTotal)}
+                        </span>
+                      </div>
                       <Button
                         variant="primary"
-                        className="flex-1"
-                        type="submit"
-                        disabled={isSubmitting}
+                        className="w-full"
+                        onClick={handleCheckout}
                       >
-                        {isSubmitting ? "Processing..." : "Place Order"}
+                        Checkout
                       </Button>
-                    </div>
-                  </div>
-                </form>
+                    </motion.div>
+                  </>
+                ) : (
+                  <motion.div
+                    className="flex-1 px-4 py-4 overflow-y-auto"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1, transition: { duration: 0.3 } }}
+                  >
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">
+                      Complete Your Order
+                    </h3>
+
+                    <form
+                      className="space-y-4"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        handleCheckout();
+                      }}
+                    >
+                      <Input
+                        label="Your Name"
+                        value={customerName}
+                        onChange={(e) => setCustomerName(e.target.value)}
+                        error={errors.customerName}
+                        fullWidth
+                        required
+                      />
+
+                      <Input
+                        label="Phone Number"
+                        type="tel"
+                        value={customerPhone}
+                        onChange={(e) => setCustomerPhone(e.target.value)}
+                        placeholder="e.g., 555-123-4567"
+                        error={errors.customerPhone}
+                        fullWidth
+                      />
+
+                      <Input
+                        label="Delivery Address"
+                        value={customerAddress}
+                        onChange={(e) => setCustomerAddress(e.target.value)}
+                        placeholder="Your full delivery address"
+                        error={errors.customerAddress}
+                        fullWidth
+                        required
+                      />
+
+                      <motion.div
+                        className="border-t border-gray-200 pt-4 mt-4"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{
+                          opacity: 1,
+                          y: 0,
+                          transition: { delay: 0.3 },
+                        }}
+                      >
+                        <div className="flex justify-between items-center mb-4">
+                          <span className="text-base font-medium text-gray-900">
+                            Total
+                          </span>
+                          <span className="text-base font-medium text-gray-900">
+                            {formatCurrency(cartTotal)}
+                          </span>
+                        </div>
+
+                        <div className="flex space-x-4">
+                          <Button
+                            variant="outline"
+                            className="flex-1"
+                            onClick={() => setCheckoutStep(1)}
+                            type="button"
+                            disabled={isSubmitting}
+                          >
+                            Back
+                          </Button>
+                          <Button
+                            variant="primary"
+                            className="flex-1"
+                            type="submit"
+                            disabled={isSubmitting}
+                          >
+                            {isSubmitting ? "Processing..." : "Place Order"}
+                          </Button>
+                        </div>
+                      </motion.div>
+                    </form>
+                  </motion.div>
+                )}
               </div>
             )}
-          </div>
-        )}
-      </div>
-    </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
   );
 }

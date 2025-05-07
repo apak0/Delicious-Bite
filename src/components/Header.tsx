@@ -1,9 +1,38 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ShoppingBag, Menu, X, UserCircle, LogOut } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingCart } from "./ShoppingCart";
 import { useOrders } from "../hooks/useOrders";
 import { useAuth } from "../context/AuthContext";
+
+// Animation variants
+const dropdownVariants = {
+  hidden: {
+    opacity: 0,
+    y: -10,
+    scale: 0.95,
+    transition: {
+      duration: 0.2,
+    },
+  },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      duration: 0.2,
+    },
+  },
+  exit: {
+    opacity: 0,
+    y: -10,
+    scale: 0.95,
+    transition: {
+      duration: 0.2,
+    },
+  },
+};
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -136,67 +165,83 @@ export function Header() {
                 className="flex items-center focus:outline-none"
                 onClick={toggleUserMenu}
               >
-                <UserCircle className="h-8 w-8 text-gray-400 hover:text-red-600" />
+                {user ? (
+                  <img
+                    alt={user.name || "User Profile"}
+                    src="https://images.unsplash.com/photo-1633332755192-727a05c4013d?ixlib=rb-1.2.1&amp;ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&amp;auto=format&amp;fit=crop&amp;w=1480&amp;q=80"
+                    className="relative inline-block h-10 w-10 cursor-pointer rounded-full object-cover object-center"
+                  />
+                ) : (
+                  <UserCircle className="h-8 w-8 text-gray-400 hover:text-red-600" />
+                )}
               </button>
 
-              {isUserMenuOpen && (
-                <div
-                  ref={userMenuRef}
-                  className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100"
-                >
-                  <div className="py-1">
-                    {user ? (
-                      <>
-                        <div className="px-4 py-2">
-                          <p className="text-sm font-medium text-gray-900">
-                            {user.name}
-                          </p>
-                          <p className="text-xs text-gray-500 capitalize">
-                            {user.role}
-                          </p>
-                        </div>
-                        <Link
-                          to="/orders"
-                          className="flex px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 items-center"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
-                          <ShoppingBag size={16} className="mr-2" />
-                          My Orders
-                        </Link>
-                      </>
-                    ) : (
-                      <>
-                        <Link
-                          to="/login"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
-                          Login
-                        </Link>
-                        <Link
-                          to="/signup"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
-                          Sign Up
-                        </Link>
-                      </>
-                    )}
-                  </div>
-
-                  {user && (
+              <AnimatePresence>
+                {isUserMenuOpen && (
+                  <motion.ul
+                    role="menu"
+                    ref={userMenuRef}
+                    className="absolute right-0 z-10 mt-2 min-w-[220px] overflow-auto rounded-lg border border-slate-200 bg-white p-1.5 shadow-lg shadow-sm focus:outline-none"
+                    variants={dropdownVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                    style={{ originX: 1, originY: 0 }}
+                  >
                     <div className="py-1">
-                      <button
-                        onClick={handleLogout}
-                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center"
-                      >
-                        <LogOut size={16} className="mr-2" />
-                        Logout
-                      </button>
+                      {user ? (
+                        <>
+                          <div className="px-4 py-2">
+                            <p className="text-sm font-medium text-gray-900">
+                              {user.name}
+                            </p>
+                            <p className="text-xs text-gray-500 capitalize">
+                              {user.role}
+                            </p>
+                          </div>
+                          <Link
+                            to="/orders"
+                            className="flex px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 items-center"
+                            onClick={() => setIsUserMenuOpen(false)}
+                          >
+                            <ShoppingBag size={16} className="mr-2" />
+                            My Orders
+                          </Link>
+                        </>
+                      ) : (
+                        <>
+                          <Link
+                            to="/login"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={() => setIsUserMenuOpen(false)}
+                          >
+                            Login
+                          </Link>
+                          <Link
+                            to="/signup"
+                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={() => setIsUserMenuOpen(false)}
+                          >
+                            Sign Up
+                          </Link>
+                        </>
+                      )}
                     </div>
-                  )}
-                </div>
-              )}
+
+                    {user && (
+                      <div className="py-1">
+                        <button
+                          onClick={handleLogout}
+                          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center"
+                        >
+                          <LogOut size={16} className="mr-2" />
+                          Logout
+                        </button>
+                      </div>
+                    )}
+                  </motion.ul>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Mobile menu button */}
@@ -218,26 +263,17 @@ export function Header() {
       </div>
 
       {/* Mobile menu, show/hide based on menu state */}
-      {isMenuOpen && (
-        <div className="md:hidden">
-          <div className="pt-2 pb-3 space-y-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className={`block px-3 py-2 text-base font-medium ${
-                  location.pathname === link.to
-                    ? "text-red-600 bg-red-50"
-                    : "text-gray-500 hover:bg-gray-50 hover:text-red-600"
-                }`}
-                onClick={toggleMenu}
-              >
-                {link.label}
-              </Link>
-            ))}
-
-            {isStaff &&
-              adminLinks.map((link) => (
+      <AnimatePresence>
+        {isMenuOpen && (
+          <motion.div
+            className="md:hidden"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="pt-2 pb-3 space-y-1">
+              {navLinks.map((link) => (
                 <Link
                   key={link.to}
                   to={link.to}
@@ -251,17 +287,36 @@ export function Header() {
                   {link.label}
                 </Link>
               ))}
-          </div>
-        </div>
-      )}
+
+              {isStaff &&
+                adminLinks.map((link) => (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    className={`block px-3 py-2 text-base font-medium ${
+                      location.pathname === link.to
+                        ? "text-red-600 bg-red-50"
+                        : "text-gray-500 hover:bg-gray-50 hover:text-red-600"
+                    }`}
+                    onClick={toggleMenu}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Shopping Cart */}
-      {isCartOpen && (
-        <ShoppingCart
-          isOpen={isCartOpen}
-          onClose={() => setIsCartOpen(false)}
-        />
-      )}
+      <AnimatePresence>
+        {isCartOpen && (
+          <ShoppingCart
+            isOpen={isCartOpen}
+            onClose={() => setIsCartOpen(false)}
+          />
+        )}
+      </AnimatePresence>
     </header>
   );
 }
