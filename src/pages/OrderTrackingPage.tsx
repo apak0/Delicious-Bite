@@ -4,9 +4,11 @@ import { Button } from "../components/ui/Button";
 import { Input } from "../components/ui/Input";
 import { OrderCard } from "../components/OrderCard";
 import { useOrders } from "../hooks/useOrders";
+import { useAuth } from "../context/AuthContext";
 
 export function OrderTrackingPage() {
   const { orders } = useOrders();
+  const { isAdmin } = useAuth();
   const [orderId, setOrderId] = useState("");
   const [error, setError] = useState("");
   const [foundOrder, setFoundOrder] = useState<(typeof orders)[0] | null>(null);
@@ -35,7 +37,9 @@ export function OrderTrackingPage() {
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Track Your Order</h1>
+        <h1 className="text-3xl font-bold text-gray-900">
+          {isAdmin ? "Orders Management" : "Track Your Order"}
+        </h1>
         <p className="text-gray-600 mt-2">
           Enter your order ID to see the current status of your order
         </p>
@@ -63,8 +67,8 @@ export function OrderTrackingPage() {
             <h2 className="text-lg font-bold text-gray-900 mb-4">
               Order Found!
             </h2>
-            <OrderCard order={foundOrder} />
 
+            <OrderCard order={foundOrder} />
             {["preparing", "ready"].includes(foundOrder.status) && (
               <div className="mt-6">
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -91,7 +95,6 @@ export function OrderTrackingPage() {
                 </div>
               </div>
             )}
-
             <div className="mt-6">
               <h3 className="text-lg font-medium text-gray-900 mb-2">
                 Order Progress

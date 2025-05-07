@@ -4,10 +4,12 @@ import { OrderCard } from "../components/OrderCard";
 import { Button } from "../components/ui/Button";
 import { Select } from "../components/ui/Input";
 import { useOrders } from "../hooks/useOrders";
+import { useAuth } from "../context/AuthContext";
 import { OrderStatus } from "../types";
 
 export function OrderListPage() {
   const { orders, fetchOrders } = useOrders();
+  const { isAdmin } = useAuth();
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
   const [expandedOrderIds, setExpandedOrderIds] = useState<Set<string>>(
@@ -85,7 +87,7 @@ export function OrderListPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
-            Orders Management
+            {isAdmin ? "Orders Management" : "Orders"}
           </h1>
         </div>
 
