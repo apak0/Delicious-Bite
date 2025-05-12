@@ -8,13 +8,21 @@ import { useAuth } from "../context/AuthContext";
 import { OrderStatus } from "../types";
 
 export function OrderListPage() {
-  const { orders, fetchOrders } = useOrders();
+  const { orders, fetchOrders, loading } = useOrders();
   const { isAdmin } = useAuth();
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
   const [expandedOrderIds, setExpandedOrderIds] = useState<Set<string>>(
     new Set()
   );
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Function to manually refresh orders
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchOrders();
+    setTimeout(() => setIsRefreshing(false), 500); // Add slight delay for better UX
+  };
 
   // Fetch orders when component mounts
   useEffect(() => {
@@ -92,13 +100,16 @@ export function OrderListPage() {
         </div>
 
         <div className="mt-4 sm:mt-0">
-          <Button variant="outline" onClick={() => window.location.reload()}>
+          <Button
+            variant="outline"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+          >
             <RefreshCw className="mr-2 h-5 w-5" />
-            Refresh
+            {isRefreshing ? "Refreshing..." : "Refresh"}
           </Button>
         </div>
       </div>
-
       {/* Order statistics */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-8">
         <div className="bg-white rounded-lg shadow p-4 text-center">
@@ -134,7 +145,6 @@ export function OrderListPage() {
           </p>
         </div>
       </div>
-
       {/* Filters */}
       <div className="bg-white rounded-lg shadow p-4 mb-8">
         <div className="flex flex-col sm:flex-row gap-4">
@@ -176,10 +186,21 @@ export function OrderListPage() {
             </Button>
           </div>
         </div>
-      </div>
-
+      </div>{" "}
       {/* Orders list */}
-      {filteredOrders.length > 0 ? (
+      {isRefreshing ? (
+        <div className="bg-white rounded-lg shadow p-8 text-center">
+          <div className="flex flex-col items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mb-4"></div>
+            <h2 className="text-lg font-medium text-gray-900">
+              Loading Orders
+            </h2>
+            <p className="text-gray-500">
+              Please wait while we fetch the latest orders...
+            </p>
+          </div>
+        </div>
+      ) : filteredOrders.length > 0 ? (
         <div className="space-y-6">
           {filteredOrders.map((order) => (
             <OrderCard

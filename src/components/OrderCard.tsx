@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Clock, User, Phone, ChevronDown, ChevronUp } from "lucide-react";
 import { Card, CardHeader, CardContent, CardFooter } from "./ui/Card";
 import { Button } from "./ui/Button";
@@ -22,6 +23,8 @@ export function OrderCard({
   isExpanded = false,
   onToggle,
 }: OrderCardProps) {
+  const [itemsLoading, setItemsLoading] = useState(false);
+
   const { orderDispatch } = useOrders();
   const { user, isAdmin: userIsAdmin, isStaff } = useAuth();
 
@@ -59,7 +62,6 @@ export function OrderCard({
                 )}
               </div>
               <div>
-                
                 {canManageOrder && (
                   <h3 className="text-lg font-semibold text-gray-900">
                     {order.customerName}
