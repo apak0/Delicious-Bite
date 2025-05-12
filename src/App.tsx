@@ -11,7 +11,7 @@ import { Footer } from "./components/Footer";
 import { PageTransition } from "./components/layout/PageTransition";
 import { HomePage } from "./pages/HomePage";
 import { MenuPage } from "./pages/MenuPage";
-import { OrderTrackingPage } from "./pages/OrderTrackingPage";
+
 import { OrderListPage } from "./pages/OrderListPage";
 import { ProductManagementPage } from "./pages/ProductManagementPage";
 import { LoginPage } from "./pages/LoginPage";
@@ -45,14 +45,6 @@ function AnimatedRoutes() {
           element={
             <PageTransition>
               <MenuPage />
-            </PageTransition>
-          }
-        />
-        <Route
-          path="/track-order"
-          element={
-            <PageTransition>
-              <OrderTrackingPage />
             </PageTransition>
           }
         />

@@ -280,7 +280,7 @@ export function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                           {cart.map((item, index) => (
                             <motion.li
                               key={item.id}
-                              className="py-4"
+                              className="py-4 px-3 mb-2 bg-red-50 rounded-lg"
                               custom={index}
                               variants={itemVariants}
                               initial="hidden"

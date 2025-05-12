@@ -108,14 +108,7 @@ export function Footer() {
                   Menu
                 </Link>
               </li>
-              <li>
-                <Link
-                  to="/track-order"
-                  className="hover:text-white transition-colors"
-                >
-                  Track Order
-                </Link>
-              </li>
+
               <li>
                 <Link
                   to="/about-us"

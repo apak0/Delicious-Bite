@@ -59,9 +59,7 @@ export function OrderCard({
                 )}
               </div>
               <div>
-                <span className="text-sm text-gray-500">
-                  Order #{order.id.slice(0, 8)}
-                </span>
+                
                 {canManageOrder && (
                   <h3 className="text-lg font-semibold text-gray-900">
                     {order.customerName}
@@ -70,11 +68,106 @@ export function OrderCard({
               </div>
             </div>
             <OrderStatusBadge status={order.status} />
-          </div>
-
+          </div>{" "}
           <div className="flex items-center text-sm text-gray-500 mt-2">
             <Clock size={16} className="mr-2" />
             <span>Ordered {formatDate(order.createdAt)}</span>
+          </div>{" "}
+          {/* Order Progress Bar */}
+          <div className="mt-3">
+            {" "}
+            {order.status === "cancelled" ? (
+              // Special styling for cancelled orders
+              <div className="h-2 w-full bg-gray-300 relative">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-full h-0.5 bg-red-500"></div>
+                </div>
+              </div>
+            ) : (
+              // Normal progress bar for active orders
+              <div className="overflow-hidden h-2 text-xs flex rounded bg-gray-200">
+                {/* Received - Yellow */}
+                <div
+                  className={`h-full bg-yellow-500 ${
+                    ["pending", "preparing", "ready", "delivered"].includes(
+                      order.status
+                    )
+                      ? "w-1/4"
+                      : "w-0"
+                  }`}
+                ></div>
+                {/* Preparing - Orange */}
+                <div
+                  className={`h-full bg-orange-500 ${
+                    ["preparing", "ready", "delivered"].includes(order.status)
+                      ? "w-1/4"
+                      : "w-0"
+                  }`}
+                ></div>
+                {/* Ready - Blue */}
+                <div
+                  className={`h-full bg-blue-500 ${
+                    ["ready", "delivered"].includes(order.status)
+                      ? "w-1/4"
+                      : "w-0"
+                  }`}
+                ></div>
+                {/* Delivered - Green */}
+                <div
+                  className={`h-full bg-green-500 ${
+                    order.status === "delivered" ? "w-1/4" : "w-0"
+                  }`}
+                ></div>
+              </div>
+            )}{" "}
+            {order.status === "cancelled" ? (
+              <div className="flex justify-center mt-1">
+                <div className="text-xs font-bold text-red-600">
+                  Order Cancelled
+                </div>
+              </div>
+            ) : (
+              <div className="flex justify-between mt-1">
+                <div
+                  className={`text-xs ${
+                    ["pending", "preparing", "ready", "delivered"].includes(
+                      order.status
+                    )
+                      ? "font-bold text-yellow-600"
+                      : "text-gray-500"
+                  }`}
+                >
+                  Received
+                </div>
+                <div
+                  className={`text-xs ${
+                    ["preparing", "ready", "delivered"].includes(order.status)
+                      ? "font-bold text-orange-600"
+                      : "text-gray-500"
+                  }`}
+                >
+                  Preparing
+                </div>
+                <div
+                  className={`text-xs ${
+                    ["ready", "delivered"].includes(order.status)
+                      ? "font-bold text-blue-600"
+                      : "text-gray-500"
+                  }`}
+                >
+                  Ready
+                </div>
+                <div
+                  className={`text-xs ${
+                    order.status === "delivered"
+                      ? "font-bold text-green-600"
+                      : "text-gray-500"
+                  }`}
+                >
+                  Delivered
+                </div>
+              </div>
+            )}
           </div>
         </CardHeader>
       </div>
@@ -106,12 +199,12 @@ export function OrderCard({
                 <div className="border-t border-gray-200 pt-4">
                   <h4 className="font-medium text-gray-900 mb-2">
                     Order Items
-                  </h4>
+                  </h4>{" "}
                   <ul className="space-y-2">
                     {order.items.map((item, index) => (
                       <li
                         key={`${order.id}-item-${item.id}-${index}`}
-                        className="flex justify-between"
+                        className="flex justify-between p-2 rounded-md bg-red-50"
                       >
                         <div className="flex">
                           <span className="font-medium">{item.quantity}x</span>
@@ -125,7 +218,6 @@ export function OrderCard({
                       </li>
                     ))}
                   </ul>
-
                   {order.items.some((item) => item.specialInstructions) && (
                     <div className="mt-3 p-3 bg-gray-50 rounded-md">
                       <h5 className="text-sm font-medium text-gray-900">
@@ -146,7 +238,6 @@ export function OrderCard({
                       </ul>
                     </div>
                   )}
-
                   {(canManageOrder || isOwnOrder) && (
                     <div className="flex justify-between font-semibold text-gray-900 mt-4">
                       <span>Total</span>

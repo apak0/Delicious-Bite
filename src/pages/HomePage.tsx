@@ -58,14 +58,6 @@ export function HomePage() {
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
-                <Link to="/track-order">
-                  <Button
-                    variant="outline"
-                    className="bg-white bg-opacity-10 hover:bg-opacity-20 sm:w-auto w-full"
-                  >
-                    Track Your Order
-                  </Button>
-                </Link>
               </div>
             </div>
           </div>

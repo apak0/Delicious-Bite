@@ -78,7 +78,6 @@ export function Header() {
   const navLinks = [
     { to: "/", label: "Home" },
     { to: "/menu", label: "Menu" },
-    { to: "/track-order", label: "Track Order" },
   ];
 
   const adminLinks = [
@@ -94,6 +93,7 @@ export function Header() {
     <header className="bg-white shadow-md sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
+          {" "}
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 flex items-center">
               <img
@@ -106,7 +106,6 @@ export function Header() {
               </span>
             </Link>
           </div>
-
           {/* Desktop navigation */}
           <nav className="hidden md:flex items-center space-x-8">
             {navLinks.map((link) => (
@@ -138,7 +137,6 @@ export function Header() {
                 </Link>
               ))}
           </nav>
-
           <div className="flex items-center">
             {/* Cart button */}
             <div className="ml-4 flow-root">
