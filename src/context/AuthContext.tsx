@@ -46,15 +46,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
       setLoading(false);
-    });
-
-    // Listen for changes on auth state
+    }); // Listen for changes on auth state
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      // Sadece kullanıcı oturum açtığında veya çıktığında tetiklenir
+      if (event === "SIGNED_IN" && session?.user) {
         fetchUser(session.user.id);
-      } else {
+      } else if (event === "SIGNED_OUT") {
         setUser(null);
       }
       setLoading(false);

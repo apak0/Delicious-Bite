@@ -13,11 +13,10 @@ export function MenuPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [isCartOpen, setIsCartOpen] = useState(false);
-
   // Fetch products when component mounts
   useEffect(() => {
     fetchProducts();
-  }, [fetchProducts]);
+  }, []); // boş bağımlılık dizisi, sadece component mount olduğunda çalışır
 
   // Get unique categories from products
   const categories = useMemo(() => {

@@ -28,7 +28,7 @@ const config: AppConfig = {
 
   // App Settings
   appName: import.meta.env.VITE_APP_NAME || "DeliciousBite",
-  apiTimeout: Number(import.meta.env.VITE_API_TIMEOUT || 30000),
+  apiTimeout: Number(import.meta.env.VITE_API_TIMEOUT || 10000), // 30 saniyeden 10 saniyeye düşürdük
 
   // Feature Flags
   enableAnalytics: import.meta.env.VITE_ENABLE_ANALYTICS === "true",

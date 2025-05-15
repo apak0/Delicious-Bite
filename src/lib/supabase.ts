@@ -6,7 +6,7 @@ export const supabase = createClient(
   config.supabaseAnonKey,
   {
     auth: {
-      autoRefreshToken: true,
+      autoRefreshToken: false, // Token'ı otomatik yenilemeden kapalı olarak değiştirdik
       persistSession: true,
       detectSessionInUrl: true,
     },

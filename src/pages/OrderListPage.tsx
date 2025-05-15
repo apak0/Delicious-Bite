@@ -23,11 +23,10 @@ export function OrderListPage() {
     await fetchOrders();
     setTimeout(() => setIsRefreshing(false), 500); // Add slight delay for better UX
   };
-
   // Fetch orders when component mounts
   useEffect(() => {
     fetchOrders();
-  }, [fetchOrders]);
+  }, []); // boş bağımlılık dizisi, sadece component mount olduğunda çalışır
 
   // Initialize expanded state with the latest order
   useEffect(() => {
